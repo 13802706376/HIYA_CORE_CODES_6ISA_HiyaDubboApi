@@ -1,0 +1,75 @@
+～～微服务架构精华～～
+
+dubbo网关，身份认证，拦截，不用修改所有的app，handlerInterceptor 
+webmvcConfigureAdapter
+
+dubbo负载均衡，loadBalance接口自己实现，优先级～admin界面配>reference>service。随机，最少活跃，轮训，一致性hash
+
+服务降级，通过mock，远程失败时直接返回指定的逻辑。
+
+服务熔断，指定时间失败次数大于阈值，进去断开状态，熔断机制是应对雪崩效应的一种微服务链路保护机制。某个微服务不可用或者响应时间太长时，会进行服务的降级，进而熔断该节点微服务的调用，快速返回错误的响应信息。当定时检测到该节点微服务调用响应正常后，恢复调用链路。
+
+服务限流，根据机器硬件配置设置最大访问量。一旦达到限定速率拒绝服务，定向到错误页面。基于令牌桶，redis实战限流。
+
+sprongcloud
+ribbon负载均衡基于http和tcp客户端的，rule，配置bean返回IRule，包括最大可用，加权，轮训，随机
+
+Zuul
+enableZuulProxy，配置path拦截路径，继承ZuulFilter，run方法，和handler拦截器原理一样的。
+
+Hystrix
+从框架级别解决送错和降级，mock从功能级别。enableCircuitBreak，在消费端配置hystrixCommand，fallbackmethod，在application.pro配置超时时间，错误比率阈值等参数
+
+spring cloud admin
+服务监控，应用监控，断路器监控
+
+spring cloud config
+git - config server  - 模块abcd
+和消息总线实战热部署。
+
+spring data mysql es redis 
+redisTemplete  实战分布式锁，根据key值判断redis是否存在？不存在true，存在并发问题，可以放在阻塞队列，还要定时获取结果字段，实现崩溃转移机制，把任务转交其他实例。
+还有一种方案是quartz分布式定时任务，内置分布式锁，自带崩溃转移功能。
+
+表单验证
+spring boot validation
+
+分布式会话
+http无状态，发起http，生成sid存续cookie，tomcat将sid存在内存，分布式下无法打通，spring session redis重写getsesion方法，交给redis存储，统一分布式会话
+
+消息队列
+springboot amqp封装了rabbitMQ，开箱急用，@enableRabbit，消费端用ribbatListener（quenes指定topic）注解接受消息，生产端使用rabbitTemplate.send发送
+
+分布式异常处理
+依赖json序列化依赖，阿里的fastjson，exceptionEntity有code，message，errer，时间，新建自定义异常，basicException继承runtime，business继承basic，新建error.ftl模板，全局异常控制类，@controllAdvice作用类表示处理全局异常。@exceptionHandler（value）作用方法上，对指定异常处理，bindExecption是hibernate表单验证异常。
+
+分布式安全认证
+dubbo中使用RpcFilter实战白名单机制。app，web，第三方，网关拦截处理有些简单，使用spring security Oauth2，1.0版本是允许第三方移动访问不需要传密码，2.0同时为web，桌面，手机认证。
+资源所有者，资源服务器，客户端，授权服务器。dubbo使用oauth2，
+springcloud使用oauth2，zuul只是转发了请求不是资源实际拥有者，授权中心负责生成和验证token。
+
+Token令牌，服务端生成的一串字符串，用户第一次登录后，服务器生成一个token并将此token返回给客户端，以后客户端只需带上这个token前来请求数据即可，无需再次带上用户名和密码。简单Token的组成：uid(用户唯一的身份标识)、time(当前时间的时间戳)、sign（token的前几位以哈希算法压缩成的一定长度的十六进制字符串。为防止token泄露）
+
+分布式日志管理
+springboot推荐使用logback，新一代日志框架取代lig4j，适用于分布式，效率高。但是还是slf4j的门面设计模式。单机只记录自己的日志，分布式日志用elk极大的支持，模块abcde... logstash... es ...kibana
+可以在logstash配置收集，也可以springboot配置logstash路径直接输出。
+
+热部署
+springboot基于maven引入devtools监控，在app.pro中配置排除的目录，和是否开启目录
+
+接口文档管理
+dubbo和springcloud都使用swagger2，分成json和ui的形式展现
+
+
+分布式架构图～
+web  手机  第三方
+              ！
+        网关模块
+             ！
+        授权中心
+              ！
+        注册中心ha  --监控治理熔断
+       ！      ！       ！
+模块a    模块b    模块c
+
+消息  缓存  私服 构建  事务  日志 配置 文档 异常 
